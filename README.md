@@ -31,6 +31,9 @@ Execute os scripts abaixo no Supabase SQL Editor:
 - `supabase/schema.sql`
 - `supabase/rls.sql`
 
+Se voce ja executou o schema antes, aplique tambem o indice unico em `wa_accounts.workspace_id`
+para liberar o upsert da conexao do WhatsApp.
+
 ### 4) Rodar o projeto
 ```bash
 npm run dev

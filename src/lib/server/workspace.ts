@@ -1,7 +1,12 @@
-﻿import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { hasSupabaseConfig } from "@/lib/env";
 
 export const ensureWorkspaceForUser = async () => {
+  if (!hasSupabaseConfig) {
+    throw new Error("Supabase nao configurado.");
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -9,7 +14,7 @@ export const ensureWorkspaceForUser = async () => {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    throw new Error("Usuário não autenticado.");
+    throw new Error("Usuario nao autenticado.");
   }
 
   const admin = createSupabaseAdminClient();
@@ -33,7 +38,7 @@ export const ensureWorkspaceForUser = async () => {
     .single();
 
   if (!workspace?.id) {
-    throw new Error("Não foi possível criar workspace.");
+    throw new Error("Nao foi possivel criar workspace.");
   }
 
   await admin.from("workspace_members").insert({

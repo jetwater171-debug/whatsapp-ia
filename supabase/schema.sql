@@ -98,3 +98,4 @@ create table if not exists events (
 create index if not exists leads_phone_idx on leads(phone);
 create index if not exists messages_provider_idx on messages(provider_message_id);
 create index if not exists messages_conversation_idx on messages(conversation_id, created_at);
+create unique index if not exists wa_accounts_workspace_idx on wa_accounts(workspace_id);

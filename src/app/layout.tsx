@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body
-        className={`${spaceGrotesk.variable} ${instrumentSerif.variable} bg-background text-foreground antialiased`}
+        className={`${spaceGrotesk.variable} ${instrumentSerif.variable} text-foreground antialiased`}
       >
         {children}
       </body>

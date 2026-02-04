@@ -1,4 +1,4 @@
-﻿import { getLeads } from "@/lib/data";
+import { getLeads } from "@/lib/data";
 import { formatDateTime, formatPhone } from "@/lib/utils";
 
 export default async function LeadsPage() {
@@ -6,21 +6,19 @@ export default async function LeadsPage() {
 
   return (
     <section className="space-y-6">
-      <header className="glass rounded-[28px] p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          Leads
-        </p>
-        <h1 className="mt-3 text-3xl">Base completa de contatos</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Acompanhe status, tags e o último contato para priorizar ação humana.
+      <header className="surface-strong animate-enter p-6">
+        <p className="eyebrow">Leads</p>
+        <h1 className="mt-4 text-3xl text-balance">Base completa de contatos</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Acompanhe status, tags e o ultimo contato para priorizar acao humana.
         </p>
       </header>
 
-      <div className="glass overflow-hidden rounded-[28px]">
+      <div className="surface overflow-hidden">
         <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-4 border-b border-white/60 bg-white/60 px-6 py-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
           <span>Lead</span>
           <span>Status</span>
-          <span>Última msg</span>
+          <span>Ultima msg</span>
           <span>Criado</span>
         </div>
         {leads.length === 0 && (
@@ -42,10 +40,7 @@ export default async function LeadsPage() {
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {(lead.tags ?? []).map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-foreground/10 px-2 py-1 text-[10px] uppercase tracking-[0.3em] text-foreground"
-                  >
+                  <span key={tag} className="chip">
                     {tag}
                   </span>
                 ))}

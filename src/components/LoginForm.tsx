@@ -1,62 +1,75 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { clientEnv } from "@/lib/client-env";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const canLogin = clientEnv.hasSupabaseConfig;
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!canLogin) return;
+
     setStatus("sending");
+    setError(null);
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error: authError } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) throw error;
+      if (authError) throw authError;
       setStatus("sent");
-    } catch {
-      setStatus("error");
+    } catch (err) {
+      setStatus("idle");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Nao foi possivel enviar. Tente novamente."
+      );
     }
   };
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
+      {!canLogin && (
+        <div className="callout callout-warning">
+          Configure `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+          para liberar o login.
+        </div>
+      )}
       <div>
-        <label className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          Email
-        </label>
+        <label className="label">Email</label>
         <input
           type="email"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm"
+          className="input"
           placeholder="voce@empresa.com"
+          disabled={!canLogin || status === "sending"}
         />
       </div>
       <button
         type="submit"
-        className="w-full rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.3em] text-white"
+        className="btn btn-primary w-full"
+        disabled={!canLogin || status === "sending"}
       >
-        {status === "sending" ? "Enviando..." : "Enviar link mágico"}
+        {status === "sending" ? "Enviando..." : "Enviar link magico"}
       </button>
       {status === "sent" && (
         <p className="text-xs text-foreground">
           Link enviado! Verifique seu email.
         </p>
       )}
-      {status === "error" && (
-        <p className="text-xs text-danger">Não foi possível enviar. Tente novamente.</p>
-      )}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </form>
   );
 }

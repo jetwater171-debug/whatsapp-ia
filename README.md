@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# WhatsApp IA - MVP
 
-## Getting Started
+Plataforma para integrar WhatsApp Business Cloud API, responder leads com IA (Gemini 2.5 Flash) e operar uma dashboard completa.
 
-First, run the development server:
+## Stack
+- Next.js (App Router) + TypeScript
+- Supabase (Postgres + Auth)
+- Vercel (deploy)
 
+## Setup
+
+### 1) Instalar dependências
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2) Variáveis de ambiente
+Crie um arquivo `.env.local` com:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+GEMINI_API_KEY=
+WHATSAPP_VERIFY_TOKEN=
+META_WHATSAPP_API_VERSION=v20.0
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3) Supabase (SQL)
+Execute os scripts abaixo no Supabase SQL Editor:
+- `supabase/schema.sql`
+- `supabase/rls.sql`
 
-## Learn More
+### 4) Rodar o projeto
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Webhook WhatsApp
+Configure o webhook para:
+```
+POST /api/webhooks/whatsapp
+GET /api/webhooks/whatsapp (verificação)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+O token de verificação precisa ser igual a `WHATSAPP_VERIFY_TOKEN`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy (Vercel)
+- Configure as variáveis no painel da Vercel.
+- Conecte o repositório GitHub.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts úteis
+- `npm run dev`
+- `npm run build`
+- `npm run start`

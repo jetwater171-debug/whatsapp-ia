@@ -1,26 +1,52 @@
-@import "tailwindcss";
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: 18 20% 98%;
+  --foreground: 222 22% 16%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 220 10% 46%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 22% 16%;
+  --border: 210 20% 90%;
+  --primary: 158 64% 38%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 36 92% 60%;
+  --accent-foreground: 222 22% 16%;
+  --danger: 2 76% 54%;
+  --danger-foreground: 0 0% 100%;
+  --shadow: 222 40% 10%;
+  --ring: 158 64% 38%;
+  --radius: 20px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  background: radial-gradient(circle at top, rgba(222, 255, 242, 0.7), transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(255, 233, 207, 0.6), transparent 55%),
+    #f8f8f5;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 30px 80px -60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }

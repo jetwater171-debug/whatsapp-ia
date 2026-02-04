@@ -119,6 +119,8 @@ export async function POST(request: NextRequest) {
       .eq("id", waNumber.wa_account_id)
       .single();
 
+    if (!waAccount) continue;
+
     const workspaceId = waAccount.workspace_id;
 
     const { data: lead } = await admin

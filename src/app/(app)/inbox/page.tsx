@@ -30,7 +30,11 @@ export default async function InboxPage({
               Nenhuma conversa ainda.
             </div>
           )}
-          {conversations.map((conversation) => (
+          {conversations.map((conversation) => {
+            const lead = Array.isArray(conversation.leads)
+              ? conversation.leads[0]
+              : conversation.leads;
+            return (
             <Link
               key={conversation.id}
               href={`/inbox?conversation=${conversation.id}`}
@@ -42,14 +46,14 @@ export default async function InboxPage({
             >
               <div className="flex items-center justify-between">
                 <p className="font-medium text-foreground">
-                  {conversation.leads?.name ?? "Lead sem nome"}
+                  {lead?.name ?? "Lead sem nome"}
                 </p>
                 <span className="text-xs text-muted-foreground">
-                  {conversation.leads?.status ?? "novo"}
+                  {lead?.status ?? "novo"}
                 </span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {formatPhone(conversation.leads?.phone)}
+                {formatPhone(lead?.phone)}
               </p>
               <p className="mt-3 text-xs text-muted-foreground">
                 {formatDateTime(conversation.last_message_at)}
@@ -58,7 +62,7 @@ export default async function InboxPage({
                 {conversation.ai_enabled ? "IA ativa" : "IA pausada"}
               </div>
             </Link>
-          ))}
+          )})}
         </div>
       </div>
       <div className="glass flex min-h-[420px] flex-col rounded-[28px] p-6">

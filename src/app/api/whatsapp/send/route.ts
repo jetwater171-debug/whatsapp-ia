@@ -21,6 +21,10 @@ export async function POST(request: Request) {
     .eq("id", parsed.data.conversationId)
     .single();
 
+  if (!conversation) {
+    return new Response("Conversation not found", { status: 404 });
+  }
+
   const { data: lead } = await admin
     .from("leads")
     .select("phone")

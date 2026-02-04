@@ -17,7 +17,7 @@ export type DashboardStats = typeof empty.stats;
 export const getDashboardStats = async () => {
   if (!hasSupabaseConfig) return empty.stats;
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { count: totalLeads } = await supabase.from("leads").select("id", { count: "exact", head: true });
   const { count: novos } = await supabase
     .from("leads")
@@ -42,7 +42,7 @@ export const getDashboardStats = async () => {
 
 export const getLeads = async () => {
   if (!hasSupabaseConfig) return empty.leads;
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("leads")
     .select("id,name,phone,status,tags,last_message_at,created_at")
@@ -53,7 +53,7 @@ export const getLeads = async () => {
 
 export const getConversations = async () => {
   if (!hasSupabaseConfig) return empty.conversations;
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("conversations")
     .select("id,lead_id,last_message_at,ai_enabled,leads(name,phone,status)")
@@ -64,7 +64,7 @@ export const getConversations = async () => {
 
 export const getConversationMessages = async (conversationId: string) => {
   if (!hasSupabaseConfig) return [];
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("messages")
     .select("id,content,direction,created_at")

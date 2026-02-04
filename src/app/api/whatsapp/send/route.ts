@@ -31,6 +31,10 @@ export async function POST(request: Request) {
     .eq("id", conversation.lead_id)
     .single();
 
+  if (!lead) {
+    return new Response("Lead not found", { status: 404 });
+  }
+
   const { data: waNumber } = await admin
     .from("wa_numbers")
     .select("phone_number_id,wa_account_id")

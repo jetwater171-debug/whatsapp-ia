@@ -37,11 +37,19 @@ export async function POST(request: Request) {
     .eq("id", conversation.wa_number_id)
     .single();
 
+  if (!waNumber) {
+    return new Response("WhatsApp number not found", { status: 404 });
+  }
+
   const { data: waAccount } = await admin
     .from("wa_accounts")
     .select("access_token")
     .eq("id", waNumber.wa_account_id)
     .single();
+
+  if (!waAccount) {
+    return new Response("WhatsApp account not found", { status: 404 });
+  }
 
   await sendWhatsAppMessage({
     accessToken: waAccount.access_token,

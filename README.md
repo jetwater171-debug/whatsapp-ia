@@ -4,7 +4,7 @@ Plataforma para integrar WhatsApp Business Cloud API, responder leads com IA (Ge
 
 ## Stack
 - Next.js (App Router) + TypeScript
-- Supabase (Postgres + Auth)
+- Supabase (Postgres)
 - Vercel (deploy)
 
 ## Setup

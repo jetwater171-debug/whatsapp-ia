@@ -12,7 +12,6 @@ const navItems = [
 type SetupState = {
   hasSupabaseConfig: boolean;
   hasServiceRole: boolean;
-  userEmail?: string | null;
 };
 
 export default function AppShell({
@@ -45,11 +44,6 @@ export default function AppShell({
               <br />
               <span className="text-white/70">Gemini 2.5 Flash</span>
             </div>
-            {setup?.userEmail && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Logado como <span className="text-foreground">{setup.userEmail}</span>
-              </p>
-            )}
           </div>
         </aside>
 
@@ -75,7 +69,7 @@ export default function AppShell({
               </p>
               <div className="mt-4 grid gap-2 text-xs text-muted-foreground">
                 {needsSupabase && (
-                  <div>- Defina `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`.</div>
+                  <div>- Defina `NEXT_PUBLIC_SUPABASE_URL`.</div>
                 )}
                 {needsServiceRole && (
                   <div>- Defina `SUPABASE_SERVICE_ROLE_KEY` para salvar WhatsApp e IA.</div>

@@ -1,5 +1,5 @@
-﻿import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { hasSupabaseConfig } from "@/lib/env";
+﻿import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { hasServiceRole } from "@/lib/env";
 
 const empty = {
   stats: {
@@ -15,9 +15,9 @@ const empty = {
 export type DashboardStats = typeof empty.stats;
 
 export const getDashboardStats = async () => {
-  if (!hasSupabaseConfig) return empty.stats;
+  if (!hasServiceRole) return empty.stats;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { count: totalLeads } = await supabase.from("leads").select("id", { count: "exact", head: true });
   const { count: novos } = await supabase
     .from("leads")
@@ -41,8 +41,8 @@ export const getDashboardStats = async () => {
 };
 
 export const getLeads = async () => {
-  if (!hasSupabaseConfig) return empty.leads;
-  const supabase = await createSupabaseServerClient();
+  if (!hasServiceRole) return empty.leads;
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("leads")
     .select("id,name,phone,status,tags,last_message_at,created_at")
@@ -52,8 +52,8 @@ export const getLeads = async () => {
 };
 
 export const getConversations = async () => {
-  if (!hasSupabaseConfig) return empty.conversations;
-  const supabase = await createSupabaseServerClient();
+  if (!hasServiceRole) return empty.conversations;
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("conversations")
     .select("id,lead_id,last_message_at,ai_enabled,leads(name,phone,status)")
@@ -63,8 +63,8 @@ export const getConversations = async () => {
 };
 
 export const getConversationMessages = async (conversationId: string) => {
-  if (!hasSupabaseConfig) return [];
-  const supabase = await createSupabaseServerClient();
+  if (!hasServiceRole) return [];
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("messages")
     .select("id,content,direction,created_at")

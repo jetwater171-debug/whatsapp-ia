@@ -7,9 +7,7 @@
   metaApiVersion: process.env.META_WHATSAPP_API_VERSION ?? "v20.0",
 };
 
-export const hasSupabaseConfig = Boolean(
-  env.supabaseUrl && env.supabaseAnonKey
-);
+export const hasSupabaseConfig = Boolean(env.supabaseUrl);
 
 export const hasServiceRole = Boolean(
   env.supabaseUrl && env.supabaseServiceRole

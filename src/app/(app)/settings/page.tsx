@@ -164,7 +164,7 @@ export default function SettingsPage() {
 
       {!canUseSupabase && (
         <div className="callout callout-warning">
-          Para editar configuracoes, defina as variaveis publicas do Supabase.
+          Para editar configuracoes, defina `NEXT_PUBLIC_SUPABASE_URL`.
         </div>
       )}
 

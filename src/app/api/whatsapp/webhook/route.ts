@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         // Note: We use the 'whatsapp_id' column or fallback to 'telegram_chat_id' for legacy support.
         // We query by whatsapp_id first.
 
+        let { data: session, error } = await supabase
             .from('sessions')
             .select('*')
             .eq('telegram_chat_id', from) // Reusing column to avoid migration requirement
@@ -55,8 +56,6 @@ export async function POST(req: NextRequest) {
                 .from('sessions')
                 .insert([{
                     telegram_chat_id: from, // Store Phone Number here
-                    whatsapp_id: from, // Try storing here too if it exists, but don't fail if it doesn't (how? insert might fail if column missing)
-
                     user_city: null,
                     device_type: "WhatsApp",
                     user_name: name,

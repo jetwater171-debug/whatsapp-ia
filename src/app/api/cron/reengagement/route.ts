@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabaseServer';
-import { sendTelegramMessage } from '@/lib/telegram';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic'; // Garantir que não faça cache
 
@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
 
         console.log(`[CRON] Encontradas ${sessions.length} sessões inativas.`);
 
-        // 3. Obter Token do Bot
+        // 3. Obter Token do Bot (WhatsApp uses env vars loaded in lib)
+        /*
         const { data: tokenData } = await supabase
             .from('bot_settings')
             .select('value')
@@ -48,6 +49,7 @@ export async function GET(req: NextRequest) {
             console.error("[CRON] Token do bot não encontrado.");
             return NextResponse.json({ error: "No Token" }, { status: 500 });
         }
+        */
 
         // 4. Processar Cada Sessão
         let processedCount = 0;
@@ -58,12 +60,14 @@ export async function GET(req: NextRequest) {
         ];
 
         for (const session of sessions) {
-            const chatId = session.telegram_chat_id;
+            const targetId = session.whatsapp_id || session.telegram_chat_id;
+            if (!targetId) continue;
 
-            console.log(`[CRON] Enviando reengajamento para sessão ${session.id} (Chat ${chatId})`);
+
+            console.log(`[CRON] Enviando reengajamento para sessão ${session.id} (Target ${targetId})`);
 
             const msg = messagesToSent[Math.floor(Math.random() * messagesToSent.length)];
-            await sendTelegramMessage(botToken, chatId, msg);
+            await sendWhatsAppMessage(targetId, msg);
             await new Promise(r => setTimeout(r, 500));
 
             // Registrar envio para não mandar de novo E atualizar timestamp

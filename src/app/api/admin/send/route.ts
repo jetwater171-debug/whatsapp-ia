@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabaseServer';
-import { sendTelegramMessage } from '@/lib/telegram';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
     const { chatId, text } = body;
 
-    // 0. Fetch Bot Token
+    // 0. Fetch Bot Token (Not needed for WhatsApp Lib as it handles internally or via env)
+    /*
     const { data: tokenData } = await supabase
         .from('bot_settings')
         .select('value')
@@ -17,14 +18,21 @@ export async function POST(req: NextRequest) {
     if (!botToken) {
         return NextResponse.json({ error: 'Bot Token not configured' }, { status: 400 });
     }
+    */
 
     // 1. Get Session ID
-    const { data: session } = await supabase.from('sessions').select('id, status').eq('telegram_chat_id', chatId).single();
+    // 1. Get Session ID - Fix query to check whatsapp_id or generic id
+    // Assuming chatId passed in body is actually the target ID (phone number or telegram chat id)
+    const { data: session } = await supabase.from('sessions')
+        .select('id, status, whatsapp_id, telegram_chat_id')
+        .or(`whatsapp_id.eq.${chatId},telegram_chat_id.eq.${chatId}`)
+        .limit(1)
+        .single();
 
     if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 });
 
-    // 2. Send to Telegram
-    await sendTelegramMessage(botToken, chatId, text);
+    // 2. Send to WhatsApp
+    await sendWhatsAppMessage(chatId, text);
 
     // 3. Save to DB
     await supabase.from('messages').insert({

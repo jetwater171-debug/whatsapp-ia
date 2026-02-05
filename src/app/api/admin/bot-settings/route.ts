@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
 
         const updates = [];
-        if (body.telegram_bot_token !== undefined) updates.push({ key: 'telegram_bot_token', value: body.telegram_bot_token });
+        // Telegram token removed
+
         if (body.whatsapp_verify_token !== undefined) updates.push({ key: 'whatsapp_verify_token', value: body.whatsapp_verify_token });
         if (body.whatsapp_access_token !== undefined) updates.push({ key: 'whatsapp_access_token', value: body.whatsapp_access_token });
         if (body.whatsapp_phone_id !== undefined) updates.push({ key: 'whatsapp_phone_id', value: body.whatsapp_phone_id });

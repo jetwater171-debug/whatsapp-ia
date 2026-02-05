@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
         const { data: session } = await supabase
             .from('sessions')
             .select('*')
-            .eq('telegram_chat_id', chatId)
+            .or(`whatsapp_id.eq.${chatId},telegram_chat_id.eq.${chatId}`)
+            .limit(1)
             .single();
 
         if (!session) return NextResponse.json({ error: 'session not found' }, { status: 404 });

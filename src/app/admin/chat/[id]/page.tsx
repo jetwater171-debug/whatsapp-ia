@@ -11,7 +11,7 @@ interface Message {
 }
 
 export default function AdminChatPage() {
-    const { id: telegramChatId } = useParams();
+    const { id: chatId } = useParams();
     const router = useRouter();
 
     const [messages, setMessages] = useState<Message[]>([]);
@@ -28,14 +28,15 @@ export default function AdminChatPage() {
 
     useEffect(() => {
         let active = true;
-        let cleanup = () => {};
+        let cleanup = () => { };
 
         (async () => {
-            if (!telegramChatId) return;
+            if (!chatId) return;
             const { data } = await supabase
                 .from('sessions')
                 .select('*')
-                .eq('telegram_chat_id', telegramChatId)
+                .or(`whatsapp_id.eq.${chatId},telegram_chat_id.eq.${chatId}`)
+                .limit(1)
                 .single();
 
             if (!active || !data) return;
@@ -59,7 +60,7 @@ export default function AdminChatPage() {
             active = false;
             cleanup();
         };
-    }, [telegramChatId]);
+    }, [chatId]);
 
     useEffect(() => {
         if (!messages.length) {
@@ -207,7 +208,7 @@ export default function AdminChatPage() {
             await fetch('/api/admin/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatId: telegramChatId, text: input })
+                body: JSON.stringify({ chatId: chatId, text: input })
             });
             setInput('');
         } catch (error) {
@@ -216,14 +217,14 @@ export default function AdminChatPage() {
     };
 
     const forceSale = async () => {
-        if (!telegramChatId) return;
+        if (!chatId) return;
         setForceLoading(true);
         setActionMsg('');
         try {
             const res = await fetch('/api/admin/force-sale', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatId: telegramChatId })
+                body: JSON.stringify({ chatId: chatId })
             });
             const data = await res.json();
             if (data?.ok) {

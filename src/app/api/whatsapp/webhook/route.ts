@@ -40,15 +40,8 @@ export async function POST(req: NextRequest) {
         console.log(`[WHATSAPP] Received from ${from}: ${msgBody}`);
 
         // 1. Get or Create Session
-        // Note: We use the 'whatsapp_id' column or 'telegram_chat_id' if reusing (migrating).
-        // Let's assume we migrated and added 'whatsapp_id'.
-        // If not, we might reuse telegram_chat_id logic if it's just a string, but better to be explicit.
-
-        // For compatibility with existing 'process-message' which uses 'telegram_chat_id' heavily, 
-        // we might store the phone number there too, OR update process-message.
-        // Let's store in 'telegram_chat_id' TEMPORARILY if 'whatsapp_id' column doesn't exist, 
-        // BUT ideally we update the schema.
-        // Let's try to query by whatsapp_id first.
+        // Note: We use the 'whatsapp_id' column or fallback to 'telegram_chat_id' for legacy support.
+        // We query by whatsapp_id first.
 
         let { data: session, error } = await supabase
             .from('sessions')

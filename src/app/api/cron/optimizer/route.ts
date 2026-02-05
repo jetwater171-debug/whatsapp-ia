@@ -222,7 +222,7 @@ ${sessionSummary}
 Você é um analista de vendas. Contexto completo:
 - Lari é uma garota de 19 anos que conversa e vende acesso VIP privado (conteúdo adulto).
 - O funil inclui: aquecimento, gatilho visual, prévia, proposta, preço e fechamento.
-- A conversa acontece no Telegram, estilo informal e rápido.
+- A conversa acontece no WhatsApp, estilo informal e rápido.
 - Objetivo: maximizar conversão respeitando o ritmo do lead (não vender frio).
 
 Sua tarefa:

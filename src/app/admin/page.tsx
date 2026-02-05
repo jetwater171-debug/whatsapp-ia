@@ -12,7 +12,7 @@ interface LeadStats {
 
 interface Session {
     id: string;
-    telegram_chat_id: string;
+    telegram_chat_id: string; // Keeping column name for now, but treating as generic Chat ID
     user_name: string;
     status: string;
     last_message_at: string;

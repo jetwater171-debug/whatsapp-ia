@@ -27,6 +27,17 @@ export async function POST(req: NextRequest) {
         const value = changes?.value;
         const messages = value?.messages;
 
+        const statuses = value?.statuses;
+
+        if (statuses && statuses.length > 0) {
+            const status = statuses[0];
+            console.log(`[WHATSAPP STATUS] Msg ID: ${status.id} | Status: ${status.status}`);
+            if (status.errors) {
+                console.error("[WHATSAPP ERROR DETAILS]:", JSON.stringify(status.errors, null, 2));
+            }
+            return NextResponse.json({ ok: true });
+        }
+
         if (!messages || messages.length === 0) {
             return NextResponse.json({ ok: true });
         }

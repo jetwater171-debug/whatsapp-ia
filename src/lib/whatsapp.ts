@@ -130,18 +130,51 @@ export const sendWhatsAppVideo = async (to: string, videoUrl: string, caption?: 
 };
 
 export const getWhatsAppMediaUrl = async (mediaId: string): Promise<string | null> => {
-     const { accessToken } = await getWhatsAppCredentials();
-     if (!accessToken) return null;
+    const { accessToken } = await getWhatsAppCredentials();
+    if (!accessToken) return null;
 
-     try {
-         const res = await fetch(`${BASE_URL}/${mediaId}`, {
-             headers: { 'Authorization': `Bearer ${accessToken}` }
-         });
-         const data = await res.json();
-         if (data.url) return data.url; // This URL requires auth to download
-         return null;
-     } catch (e) {
-         console.error("Error getting media URL:", e);
-         return null;
-     }
+    try {
+        const res = await fetch(`${BASE_URL}/${mediaId}`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        const data = await res.json();
+        if (data.url) return data.url; // This URL requires auth to download
+        return null;
+    } catch (e) {
+        console.error("Error getting media URL:", e);
+        return null;
+    }
 }
+
+export const sendWhatsAppTemplate = async (to: string, templateName: string, languageCode: string = "en_US") => {
+    const { accessToken, phoneId } = await getWhatsAppCredentials();
+    if (!accessToken || !phoneId) return { error: "Credentials missing" };
+
+    try {
+        const res = await fetch(`${BASE_URL}/${phoneId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messaging_product: "whatsapp",
+                recipient_type: "individual",
+                to: to,
+                type: "template",
+                template: {
+                    name: templateName,
+                    language: {
+                        code: languageCode
+                    }
+                }
+            })
+        });
+
+        const data = await res.json();
+        return data;
+    } catch (e) {
+        console.error("Failed to send WhatsApp template:", e);
+        return { error: e };
+    }
+};

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabaseServer';
 import { sendMessageToGemini } from '@/lib/gemini';
-import { sendTelegramMessage, sendTelegramPhoto, sendTelegramVideo, sendTelegramAction, sendTelegramCopyableCode } from '@/lib/telegram';
+// Telegram imports removed
+import { sendWhatsAppMessage, sendWhatsAppImage, sendWhatsAppVideo } from '@/lib/whatsapp';
 import { WiinPayService } from '@/lib/wiinpayService';
 
 // Esta rota atua como um worker em segundo plano.
@@ -288,12 +289,10 @@ export async function POST(req: NextRequest) {
     const { data: tokenData } = await supabase
         .from('bot_settings')
         .select('value')
-        .eq('key', 'telegram_bot_token')
+        .eq('key', 'whatsapp_access_token')
         .single();
+    // Assuming we might need this check or just skip it as whatsapp.ts handles tokens internally
 
-    const botToken = tokenData?.value;
-    if (!botToken) return NextResponse.json({ error: 'Sem token' });
-    const chatId = session.telegram_chat_id;
 
     // CONFIG: Tempo Total de Espera 6000ms (Debounce para Agrupamento)
     // Estratégia: Esperar 2s -> Enviar Digitando -> Esperar 4s -> Processar
@@ -302,11 +301,11 @@ export async function POST(req: NextRequest) {
     // 1. Primeira Espera (2s)
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // 2. Enviar Ação Digitando
-    await sendTelegramAction(botToken, chatId, 'typing');
+    // 2. [WhatsApp] Enviar Ação Digitando? (API nao tem endpoint oficial publico de typing persistente igual telegram)
+    // Podemos pular ou implementar se a lib whatsapp tiver suporte. Por enquanto, só delay.
 
-    // 3. Segunda Espera (4s)
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    // 3. Segunda Espera (2s)
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // 4. Verificar mensagens mais recentes (Lógica de Substituição)
     // Verificamos se há alguma mensagem MAIS NOVA que a que disparou este worker.
@@ -334,7 +333,7 @@ export async function POST(req: NextRequest) {
     // Se chegamos aqui, DEVEMOS manter o status digitando ativo se o processamento demorar?
     // Digitando no Telegram dura ~5s. Pode ter expirado ou estar perto. 
     // Vamos enviar de novo só por segurança/frescor para o atraso real de geração.
-    await sendTelegramAction(botToken, chatId, 'typing');
+    // Digitando check removido (WhatsApp)
 
     // 5. Contexto e Lógica
 
@@ -449,127 +448,19 @@ export async function POST(req: NextRequest) {
     let mediaData = undefined;
 
     // Detectar Audio
+    // Audio detection logic simplified/removed for now as it relied on Telegram token/files
+    /*
     const audioMatch = combinedText.match(/\[AUDIO_UUID: (.+)\]/);
-    if (audioMatch && botToken) {
-        const fileId = audioMatch[1];
-        console.log(`[PROCESSADOR] Detectado Áudio ID: ${fileId}`);
-
-        try {
-            // Importar dinamicamente para evitar erro circular se houver, ou usar as funcoes diretas
-            const { getTelegramFilePath, getTelegramFileDownloadUrl } = await import('@/lib/telegram');
-
-            const filePath = await getTelegramFilePath(botToken, fileId);
-            if (filePath) {
-                const downloadUrl = getTelegramFileDownloadUrl(botToken, filePath);
-                console.log(`[PROCESSADOR] Baixando áudio de: ${downloadUrl}`);
-
-                const res = await fetch(downloadUrl);
-                const arrayBuffer = await res.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                const base64Audio = buffer.toString('base64');
-
-                mediaData = {
-                    mimeType: 'audio/ogg', // Telegram voice notes are usually OGG Opus
-                    data: base64Audio
-                };
-
-                // Remove o tag interna para a IA não se confundir, ou passamos uma instrução
-                finalUserMessage = "Enviou um áudio de voz.";
-            }
-        } catch (e) {
-            console.error("Erro ao baixar áudio:", e);
-        }
+    if (audioMatch) {
+         // Logic to download audio from WhatsApp media URL would go here
     }
+    */
 
     // Detectar V??deo
-    const videoMatch = combinedText.match(/\[VIDEO_UPLOAD\] File_ID: (.+)/);
-    if (videoMatch) {
-        const { fileId, caption } = extractFileAndCaption(videoMatch[0]);
-        // Sempre avise a IA que o video foi recebido.
-        finalUserMessage = "Enviou um v??deo. O sistema confirmou o recebimento do v??deo." + (caption ? `\nLegenda do usu??rio: ${caption}` : '');
-        if (fileId && botToken) {
-            try {
-                const { getTelegramFilePath, getTelegramFileDownloadUrl } = await import('@/lib/telegram');
-                const filePath = await getTelegramFilePath(botToken, fileId);
-                if (filePath) {
-                    const downloadUrl = getTelegramFileDownloadUrl(botToken, filePath);
-                    const { data: videoMsg } = await supabase
-                        .from('messages')
-                        .select('id')
-                        .eq('session_id', session.id)
-                        .eq('sender', 'user')
-                        .ilike('content', `%${fileId}%`)
-                        .order('created_at', { ascending: false })
-                        .limit(1)
-                        .single();
-                    if (videoMsg) {
-                        await supabase.from('messages').update({
-                            media_url: downloadUrl,
-                            media_type: 'video'
-                        }).eq('id', videoMsg.id);
-                    }
-                }
-            } catch (e) {
-                console.error("Erro ao processar v??deo:", e);
-            }
-        }
-    }
+    // Video logic removed (Telegram specific)
 
     // Detectar Foto (Novo)
-    const photoMatch = combinedText.match(/\[PHOTO_UPLOAD\] File_ID: (.+)/);
-    if (photoMatch && botToken) {
-        const { fileId, caption } = extractFileAndCaption(photoMatch[0]);
-        if (!fileId) return NextResponse.json({ status: 'invalid_photo' });
-        console.log(`[PROCESSADOR] Detectada FOTO ID: ${fileId}`);
-
-        try {
-            const { getTelegramFilePath, getTelegramFileDownloadUrl } = await import('@/lib/telegram');
-            const filePath = await getTelegramFilePath(botToken, fileId);
-            if (filePath) {
-                const downloadUrl = getTelegramFileDownloadUrl(botToken, filePath);
-                console.log(`[PROCESSADOR] URL da Foto: ${downloadUrl}`);
-
-                // 1. Atualizar a mensagem original com o media_url para o Chat Monitor ver
-                // Precisamos achar a mensagem do usuário com esse FileID
-                const { data: photoMsg } = await supabase
-                    .from('messages')
-                    .select('id')
-                    .eq('session_id', session.id)
-                    .eq('sender', 'user')
-                    .ilike('content', `%${fileId}%`)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .single();
-
-                if (photoMsg) {
-                    await supabase.from('messages').update({
-                        media_url: downloadUrl, // Url temporária do Telegram (1h)
-                        media_type: 'image'
-                    }).eq('id', photoMsg.id);
-                }
-
-                // 2. Opcional: Baixar e enviar para o Gemini (Vision)
-                // CAUSA ERRO DE SAFETY SE FOR NUDE. DESATIVADO TEMPORARIAMENTE.
-                /*
-                const res = await fetch(downloadUrl);
-                const arrayBuffer = await res.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                const base64Image = buffer.toString('base64');
-
-                mediaData = {
-                    mimeType: 'image/jpeg',
-                    data: base64Image
-                };
-                
-                finalUserMessage = "Enviou uma foto/nude. Analise a imagem se possível.";
-                */
-
-                finalUserMessage = "Enviou uma foto PROIBIDA (Nude ou +18). O sistema bloqueou a imagem por segurança. Reaja como se tivesse visto algo muito excitante.";
-            }
-        } catch (e) {
-            console.error("Erro ao processar foto:", e);
-        }
-    }
+    // Photo logic removed (Telegram specific)
 
     if (combinedText.includes(triggerPrefix)) {
         finalUserMessage = `${finalUserMessage}\n\n[OBSERVACAO INTERNA: o admin pediu para iniciar a venda agora. Use o contexto da conversa e leve para proposta/preco de forma natural.]`;
@@ -734,30 +625,12 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    // 5.5 Atualizar Transcrição de Áudio (Se houver)
+    // 5.5 Atualizar Transcrição de Áudio (Se houver) - DESATIVADO TEMPORARIAMENTE (Telegram Removed)
+    /*
     if (aiResponse.audio_transcription && audioMatch) {
-        // audioMatch[0] é todo o texto "[AUDIO_UUID: ...]"
-        // Vamos atualizar a mensagem do usuário que contém isso.
-        // Precisamos achar o ID da mensagem.
-        // Podemos tentar achar pelo conteúdo exato no banco para essa sessão.
-
-        const { data: audioMsg } = await supabase
-            .from('messages')
-            .select('id')
-            .eq('session_id', session.id)
-            .eq('sender', 'user')
-            .ilike('content', `%${audioMatch[1]}%`) // Match pelo UUID
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-        if (audioMsg) {
-            console.log(`[PROCESSADOR] Atualizando transcrição para MSG ${audioMsg.id}`);
-            await supabase.from('messages').update({
-                content: `[ÁUDIO (Transcrição): "${aiResponse.audio_transcription}"]`
-            }).eq('id', audioMsg.id);
-        }
+        // ... (logic removed)
     }
+    */
 
     if (combinedText.includes(triggerPrefix)) {
         try {
@@ -781,14 +654,12 @@ export async function POST(req: NextRequest) {
 
 
     // [SETUP PLATFORM]
-    const isWhatsApp = session.device_type === 'WhatsApp' || (session.whatsapp_id && session.whatsapp_id.length > 5);
-    let sendWhatsAppMessage: any, sendWhatsAppImage: any, sendWhatsAppVideo: any;
-    if (isWhatsApp) {
-        const wa = await import('@/lib/whatsapp');
-        sendWhatsAppMessage = wa.sendWhatsAppMessage;
-        sendWhatsAppImage = wa.sendWhatsAppImage;
-        sendWhatsAppVideo = wa.sendWhatsAppVideo;
-    }
+    // ALWAYS WHATSAPP NOW
+    const wa = await import('@/lib/whatsapp');
+    const sendWhatsAppMessage = wa.sendWhatsAppMessage;
+    const sendWhatsAppImage = wa.sendWhatsAppImage;
+    const sendWhatsAppVideo = wa.sendWhatsAppVideo;
+
 
     // 7. Lidar com Mídia
     if (aiResponse.action !== 'none') {
@@ -802,6 +673,9 @@ export async function POST(req: NextRequest) {
         let mediaUrl = null;
         let mediaType = null;
         let caption = "";
+
+        // Define targetId here to be available for all blocks
+        const targetId = session.whatsapp_id || session.telegram_chat_id;
 
         if (aiResponse.action === 'send_custom_preview') {
             const previewId = (aiResponse as any).preview_id;
@@ -820,8 +694,7 @@ export async function POST(req: NextRequest) {
             }
         } else {
             // ACTIONS
-            const targetId = isWhatsApp ? (session.whatsapp_id || session.telegram_chat_id) : session.telegram_chat_id;
-
+            // targetId already defined above used here
             switch (aiResponse.action) {
                 case 'send_shower_photo': mediaUrl = SHOWER_PHOTO; mediaType = 'image'; caption = ""; break;
                 case 'send_lingerie_photo': mediaUrl = LINGERIE_PHOTO; mediaType = 'image'; break;
@@ -851,8 +724,7 @@ export async function POST(req: NextRequest) {
                             const paymentId = lastPayMsg.payment_data?.paymentId ?? (idMatch ? idMatch[1] : null);
 
                             if (!paymentId) {
-                                if (isWhatsApp) await sendWhatsAppMessage(targetId, "amor nao achei o codigo da transação aqui... manda o comprovante?");
-                                else await sendTelegramMessage(botToken, chatId, "amor nao achei o codigo da transação aqui... manda o comprovante?");
+                                await sendWhatsAppMessage(targetId, "amor nao achei o codigo da transação aqui... manda o comprovante?");
                                 break;
                             }
 
@@ -873,8 +745,7 @@ export async function POST(req: NextRequest) {
                                     content: `[SISTEMA: PAGAMENTO CONFIRMADO - R$ ${value}. TOTAL PAGO: R$ ${newTotal}]`
                                 });
 
-                                if (isWhatsApp) await sendWhatsAppMessage(targetId, "confirmado amor! obrigada... vou te mandar agora");
-                                else await sendTelegramMessage(botToken, chatId, "confirmado amor! obrigada... vou te mandar agora");
+                                await sendWhatsAppMessage(targetId, "confirmado amor! obrigada... vou te mandar agora");
 
                                 // Update Payment Status in DB
                                 if (paymentId) {
@@ -897,18 +768,16 @@ export async function POST(req: NextRequest) {
                                 await supabase.from('funnel_events').insert({ session_id: session.id, step: 'PAYMENT_CONFIRMED', source: 'system' });
                             } else {
                                 const failMsg = "amor ainda não caiu aqui... tem certeza? (Status: " + status + ")";
-                                if (isWhatsApp) await sendWhatsAppMessage(targetId, failMsg);
-                                else await sendTelegramMessage(botToken, chatId, failMsg);
+                                await sendWhatsAppMessage(targetId, failMsg);
                             }
 
                         } else {
-                            if (isWhatsApp) await sendWhatsAppMessage(targetId, "amor qual pix? nao achei aqui");
-                            else await sendTelegramMessage(botToken, chatId, "amor qual pix? nao achei aqui");
+                            await sendWhatsAppMessage(targetId, "amor qual pix? nao achei aqui");
                         }
                     } catch (e: any) {
                         console.error("Erro Verificação Pagamento", e);
-                        if (isWhatsApp) await sendWhatsAppMessage(targetId, "deu erro ao verificar amor, manda o comprovante?");
-                        else await sendTelegramMessage(botToken, chatId, "deu erro ao verificar amor, manda o comprovante?");
+                        await sendWhatsAppMessage(targetId, "deu erro ao verificar amor, manda o comprovante?");
+
                     }
                     break;
 
@@ -935,13 +804,9 @@ export async function POST(req: NextRequest) {
 
                         const lastPaymentData: any = lastPixMsg?.payment_data || {};
                         if (Number(lastPaymentData.value || 0) === Number(value) && lastPaymentData.paid !== true && lastPaymentData.pixCopiaCola) {
-                            if (isWhatsApp) {
-                                await sendWhatsAppMessage(targetId, "ta aqui o pix de novo amor 👇");
-                                await sendWhatsAppMessage(targetId, lastPaymentData.pixCopiaCola);
-                            } else {
-                                await sendTelegramMessage(botToken, chatId, "ta aqui o pix de novo amor 👇");
-                                await sendTelegramCopyableCode(botToken, chatId, lastPaymentData.pixCopiaCola);
-                            }
+                            await sendWhatsAppMessage(targetId, "ta aqui o pix de novo amor 👇");
+                            await sendWhatsAppMessage(targetId, lastPaymentData.pixCopiaCola);
+
                             await supabase.from('messages').insert({
                                 session_id: session.id,
                                 sender: 'system',
@@ -957,18 +822,13 @@ export async function POST(req: NextRequest) {
                             name: session.user_name || "Anônimo",
                             email: (session.user_name && session.user_name.toLowerCase().includes('operação kaique'))
                                 ? 'operaçaokaique@gmail.com'
-                                : `user_${chatId}@telegram.com`,
+                                : `user_${session.whatsapp_id || session.id}@whatsapp.com`,
                             description: description
                         });
 
                         if (payment && payment.pixCopiaCola) {
-                            if (isWhatsApp) {
-                                await sendWhatsAppMessage(targetId, "ta aqui o pix amor 👇");
-                                await sendWhatsAppMessage(targetId, payment.pixCopiaCola);
-                            } else {
-                                await sendTelegramMessage(botToken, chatId, "ta aqui o pix amor 👇");
-                                await sendTelegramCopyableCode(botToken, chatId, payment.pixCopiaCola);
-                            }
+                            await sendWhatsAppMessage(targetId, "ta aqui o pix amor 👇");
+                            await sendWhatsAppMessage(targetId, payment.pixCopiaCola);
 
                             await supabase.from('messages').insert({
                                 session_id: session.id,
@@ -985,29 +845,22 @@ export async function POST(req: NextRequest) {
                             });
                         } else {
                             const errM = "amor o sistema caiu aqui rapidinho... tenta daqui a pouco?";
-                            if (isWhatsApp) await sendWhatsAppMessage(targetId, errM);
-                            else await sendTelegramMessage(botToken, chatId, errM);
+                            await sendWhatsAppMessage(targetId, errM);
                         }
                     } catch (err: any) {
                         console.error("Erro Pagamento:", err);
                         const errM = "amor nao consegui gerar o pix agora... que raiva";
-                        if (isWhatsApp) await sendWhatsAppMessage(targetId, errM);
-                        else await sendTelegramMessage(botToken, chatId, errM);
+                        await sendWhatsAppMessage(targetId, errM);
                     }
                     break;
             }
         }
 
         if (mediaUrl) {
-            const targetId = isWhatsApp ? (session.whatsapp_id || session.telegram_chat_id) : session.telegram_chat_id;
+            // const targetId = session.whatsapp_id || session.telegram_chat_id; // Already defined above
             try {
-                if (isWhatsApp) {
-                    if (mediaType === 'image') await sendWhatsAppImage(targetId, mediaUrl, caption);
-                    if (mediaType === 'video') await sendWhatsAppVideo(targetId, mediaUrl, "olha isso");
-                } else {
-                    if (mediaType === 'image') await sendTelegramPhoto(botToken, chatId, mediaUrl, caption);
-                    if (mediaType === 'video') await sendTelegramVideo(botToken, chatId, mediaUrl, "olha isso");
-                }
+                if (mediaType === 'image') await sendWhatsAppImage(targetId, mediaUrl, caption);
+                if (mediaType === 'video') await sendWhatsAppVideo(targetId, mediaUrl, "olha isso");
 
                 await supabase.from('messages').insert({
                     session_id: session.id,
@@ -1019,8 +872,7 @@ export async function POST(req: NextRequest) {
             } catch (err: any) {
                 console.error("Erro ao enviar mídia:", err);
                 // Fallback
-                if (isWhatsApp) await sendWhatsAppMessage(targetId, "(amor tive um erro pra enviar o video... tenta de novo?)");
-                else await sendTelegramMessage(botToken, chatId, "(amor tive um erro pra enviar o video... tenta de novo?)");
+                await sendWhatsAppMessage(targetId, "(amor tive um erro pra enviar o video... tenta de novo?)");
             }
         }
     }

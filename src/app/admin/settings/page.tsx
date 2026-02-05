@@ -4,7 +4,6 @@ import Link from "next/link";
 
 export default function AdminSettingsPage() {
     const [settings, setSettings] = useState({
-        telegram_bot_token: "",
         whatsapp_verify_token: "",
         whatsapp_access_token: "",
         whatsapp_phone_id: ""
@@ -22,7 +21,6 @@ export default function AdminSettingsPage() {
         const data = await res.json();
         if (data) {
             setSettings({
-                telegram_bot_token: data.telegram_bot_token || "",
                 whatsapp_verify_token: data.whatsapp_verify_token || "",
                 whatsapp_access_token: data.whatsapp_access_token || "",
                 whatsapp_phone_id: data.whatsapp_phone_id || ""
@@ -80,22 +78,6 @@ export default function AdminSettingsPage() {
 
                 <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 via-white/3 to-white/5 p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.9)]">
 
-                    {/* TELEGRAM */}
-                    <div className="mb-8">
-                        <h2 className="text-lg font-semibold text-cyan-300 mb-4">Telegram (Antigo)</h2>
-                        <div className="flex flex-col gap-3">
-                            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Bot Token</label>
-                            <input
-                                value={settings.telegram_bot_token}
-                                onChange={(e) => handleChange('telegram_bot_token', e.target.value)}
-                                type="password"
-                                className="w-full rounded-xl border border-white/10 bg-slate-900/70 px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="h-px bg-white/10 mb-8" />
-
                     {/* WHATSAPP */}
                     <div className="mb-8">
                         <h2 className="text-lg font-semibold text-emerald-400 mb-4">WhatsApp Cloud API</h2>
@@ -141,8 +123,8 @@ export default function AdminSettingsPage() {
                             onClick={saveSettings}
                             disabled={loading}
                             className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${loading
-                                    ? "cursor-not-allowed bg-slate-700 text-slate-300"
-                                    : "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                                ? "cursor-not-allowed bg-slate-700 text-slate-300"
+                                : "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
                                 }`}
                         >
                             {loading ? "Salvando..." : "Salvar Todas as Configurações"}
